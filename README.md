@@ -21,12 +21,61 @@
    type: ClusterIP
    ```
 
-4. Create Jenkins Pipeline  
-![jenkins pipeline](./assets/jenkins-setup-pipeline.png)  
+4. Install Kubernetes plugins and Create Jenkins Pipeline  
+![jenkins pipeline](./assets/jenkins-pipeline-setup.png)  
 
 5. Create a Jenkinsfile in the repo and push the changes.
    ```Jenkinsfile
+   pipeline {
+      agent any
 
+      environment {
+         KUBECONFIG = '/var/lib/jenkins/.kube/config'
+      }
+
+      stages {
+         stage('Namespace') {
+               steps {
+                  script {
+                     def namespaceExists = sh(script: 'kubectl get namespace wp', returnStatus: true) == 0
+                     if (namespaceExists) {
+                           echo 'Namespace wp exists'
+                           return
+                     } else {
+                           echo 'Creating wp namespace'
+                           sh 'kubectl create namespace wp'
+                     }
+                  }
+               }
+         }
+
+         stage('Helm') {
+               steps {
+                  script {
+                     sh 'helm dependency build ./bitnami/wordpress'
+                     sh 'helm upgrade --install final-project-wp-scalefocus ./bitnami/wordpress -n wp'
+                  }
+               }
+         }
+      }
+   }
    ```
 
 6. Trigger build from Jenkins
+![jenkinsbuild](./assets/jenkins-build.png)
+![jenkinsbuildoutput](./assets/jenkins-build-output.png)
+
+7. Minikube status
+![minikubestatus](./assets/minikubestatus.png)
+
+8. Run 
+   ```bash
+   kubectl port-forward --namespace wp svc/final-project-wp-scalefocus-wordpress 9000:80
+   ```  
+   ![portforward](./assets/kubectl-port-forward.png)  
+
+9. Wordpress
+![hello world](./assets/hello%20world.png)  
+![wp-admin](./assets/wp-admin.png)  
+![user-pass](./assets/user-pass.png)  
+![blogpost](./assets/blogpost.png)
