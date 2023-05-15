@@ -24,6 +24,7 @@ pipeline {
         stage('Helm') {
             steps {
                 script {
+                    sh 'helm dependency build'
                     sh 'helm upgrade --install final-project-wp-scalefocus ./bitnami/wordpress -n wp'
                     sh 'kubectl port-forward --namespace wp svc/final-project-wp-scalefocus-wordpress 9000:80'
                 }
